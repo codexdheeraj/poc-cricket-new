@@ -1,42 +1,81 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.streamer-container {
+  width: 90%; /* Width responsive to screen */
+  max-width: 800px; /* Maximum width for larger screens */
+  height: 70vh; /* Fixed height of 70% of viewport height */
+  margin: 0 auto; /* Center the container */
+  padding: 20px; /* Add padding */
+  background-color: #fff; /* White background for content */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Shadow effect */
+  text-align: center; /* Center align text */
+  display: flex;
+  flex-direction: column; /* Vertical layout */
+  justify-content: center; /* Center contents vertically */
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.streamer-title {
+  font-family: 'Arial', sans-serif; /* Change font family */
+  color: #333; /* Darker text color */
+  margin-bottom: 20px; /* Space below title */
+}
+
+.video-wrapper {
+  position: relative; /* Position for absolute elements if needed */
+  overflow: hidden; /* Hide overflow */
+  border-radius: 8px; /* Rounded corners for the video wrapper */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Video shadow effect */
+  flex: 1; /* Allow the video wrapper to grow */
+  display: flex; /* Enable flex for centering */
+  justify-content: center; /* Center the video */
+  align-items: center; /* Center the video */
+}
+
+.video-player {
+  width: 100%; /* Responsive width */
+  height: 100%; /* Responsive height */
+  object-fit: cover; /* Cover the container */
+}
+
+.record-button {
+  padding: 10px 20px; /* Add padding */
+  font-size: 1em; /* Increase font size */
+  color: white; /* White text */
+  background-color: #3498db; /* Blue background */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor */
+  transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+.record-button.start {
+  background-color: #2ecc71; /* Green for start */
+}
+
+.record-button.stop {
+  background-color: #e74c3c; /* Red for stop */
+}
+
+.record-button:hover {
+  opacity: 0.9; /* Slight opacity change on hover */
+}
+
+/* Responsive design adjustments */
+@media (max-width: 600px) {
+  .streamer-title {
+    font-size: 1.5em; /* Larger title for mobile */
   }
-  to {
-    transform: rotate(360deg);
+
+  .record-button {
+    width: 100%; /* Full width button on mobile */
+    font-size: 1.2em; /* Larger button text */
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

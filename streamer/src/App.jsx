@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import './App.css'; // Import the CSS file for styling
 import RecordRTC from 'recordrtc';
 
 const Streamer = () => {
@@ -34,7 +35,7 @@ const Streamer = () => {
       const formData = new FormData();
       formData.append('video', file);
 
-      fetch('http://localhost:3001/upload', {
+      fetch('https://9387-47-247-143-178.ngrok-free.app/upload', {
         method: 'POST',
         body: formData,
       })
@@ -55,15 +56,15 @@ const Streamer = () => {
   };
 
   return (
-    <div>
-      <h2>Streamer App</h2>
-      <video ref={videoRef} autoPlay muted></video>
+    <div className="streamer-container">
+      <h2 className="streamer-title">Streamer App</h2>
+      <div className="video-wrapper">
+        <video ref={videoRef} autoPlay muted className="video-player"></video>
+      </div>
       <br />
-      {!isRecording ? (
-        <button onClick={startRecording}>Start Recording</button>
-      ) : (
-        <button onClick={stopRecording}>Stop Recording</button>
-      )}
+      <button className={`record-button ${isRecording ? 'stop' : 'start'}`} onClick={isRecording ? stopRecording : startRecording}>
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
+      </button>
     </div>
   );
 };

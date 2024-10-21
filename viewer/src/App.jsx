@@ -1,21 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './App.css'; // Import the CSS file for styling
 
 const Viewer = () => {
   const [videoUrl, setVideoUrl] = useState('');
-  const [streamStartTime, setStreamStartTime] = useState(null); // Stream start timestamp from the backend
+  const [streamStartTime, setStreamStartTime] = useState(null);
   const [latency, setLatency] = useState(null);
-  const videoRef = useRef(null); // Reference to the video element
+  const [latencyCalculated, setLatencyCalculated] = useState(false); // New flag to track latency calculation
+  const videoRef = useRef(null);
 
-  // Fetch the latest video and stream start time
   const fetchLatestVideo = async () => {
     try {
-      const response = await fetch('http://localhost:3001/latest-video');
+      const response = await fetch('https://9387-47-247-143-178.ngrok-free.app/latest-video', {
+        method: "GET",
+        headers: new Headers({
+          "ngrok-skip-browser-warning": "69420",
+        }),
+      });
+
       const data = await response.json();
-      
+
       if (data.filename) {
-        const latestVideoUrl = `http://localhost:3001/uploads/${data.filename}`;
+        const latestVideoUrl = `https://9387-47-247-143-178.ngrok-free.app/uploads/${data.filename}`;
+        
+        // If a new video is fetched, reset the latency flag
+        if (latestVideoUrl !== videoUrl) {
+          setLatencyCalculated(false); // Reset flag for new video
+        }
+
         setVideoUrl(latestVideoUrl);
-        setStreamStartTime(data.streamStartTime); // Store stream start time
+        setStreamStartTime(data.streamStartTime);
       } else {
         console.error('No new video found.');
       }
@@ -24,32 +37,30 @@ const Viewer = () => {
     }
   };
 
-  // Function to calculate latency
   const calculateLatency = () => {
-    const viewerReceivedTime = Date.now();
-    const latencyTime = viewerReceivedTime - streamStartTime;
-    setLatency(latencyTime); // Set latency in milliseconds
+    if (!latencyCalculated) { // Only calculate latency if it hasn't been done for the current video
+      const viewerReceivedTime = Date.now();
+      const latencyTime = viewerReceivedTime - streamStartTime;
+      setLatency(latencyTime);
+      setLatencyCalculated(true); // Mark latency as calculated for this video
+    }
   };
 
-  // Auto-refresh when video ends
   const handleVideoEnd = async () => {
     console.log("Video ended");
     
-    await fetchLatestVideo(); // Fetch the latest video after the current one ends
+    await fetchLatestVideo();
 
-    // Check if there's a new video
     if (videoUrl === '') {
-      // If no new video, replay the last video
       if (videoRef.current) {
-        videoRef.current.currentTime = 0; // Reset to start
-        videoRef.current.play(); // Replay the video
+        videoRef.current.currentTime = 0;
+        videoRef.current.play();
       }
     } else {
-      // If there's a new video, attempt to play it
       if (videoRef.current) {
         videoRef.current.play()
           .then(() => {
-            calculateLatency(); // Calculate latency once the new video starts playing
+            calculateLatency(); // Only calculate latency for new videos
           })
           .catch(err => {
             console.error('Error playing new video:', err);
@@ -58,18 +69,16 @@ const Viewer = () => {
     }
   };
 
-  // Use effect to fetch video and play
   useEffect(() => {
     fetchLatestVideo();
   }, []);
 
-  // Automatically play the video when it is available
   useEffect(() => {
     if (videoUrl && videoRef.current) {
-      videoRef.current.muted = true; // Mute the video to allow autoplay
+      videoRef.current.muted = true;
       videoRef.current.play()
         .then(() => {
-          calculateLatency(); // Calculate latency once video starts playing
+          calculateLatency(); // Calculate latency when the first video starts playing
         })
         .catch(err => {
           console.error('Error playing video:', err);
@@ -78,23 +87,27 @@ const Viewer = () => {
   }, [videoUrl]);
 
   return (
-    <div>
-      <h2>Viewer App</h2>
+    <div className="viewer-container">
+      <h2 className="viewer-title">Viewer App</h2>
       {videoUrl ? (
         <div>
-          <video 
-            ref={videoRef}
-            src={videoUrl}
-            controls 
-            width="600"
-            onEnded={handleVideoEnd} // Auto-refresh when video ends
-          />
-          {latency !== null && (
-            <p>Latency: {latency} ms</p>
-          )}
+          <div className="video-wrapper">
+            <video 
+              ref={videoRef}
+              src={videoUrl}
+              controls 
+              className="video-player"
+              onEnded={handleVideoEnd}
+            />
+          </div>
+          <div>
+            {latency !== null && (
+              <p className="latency-info">Latency: {latency} ms</p> 
+            )}
+          </div>
         </div>
       ) : (
-        <p>No video available.</p>
+        <p className="no-video-message">No video available.</p>
       )}
     </div>
   );

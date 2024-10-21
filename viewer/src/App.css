@@ -1,42 +1,78 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.viewer-container {
+  width: 90%; /* Responsive width */
+  max-width: 800px; /* Maximum width for larger screens */
+  height: 80vh; /* Fixed height of 70% of viewport height */
+  margin: 0 auto; /* Center the container */
+  padding: 20px; /* Add padding */
+  background-color: #fff; /* White background for content */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Shadow effect */
+  text-align: center; /* Center align text */
+  display: flex;
+  flex-direction: column; /* Vertical layout */
+  justify-content: center; /* Center contents vertically */
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.viewer-title {
+  font-family: 'Arial', sans-serif; /* Change font family */
+  color: #333; /* Darker text color */
+  margin-bottom: 20px; /* Space below title */
+}
+
+.video-wrapper {
+  position: relative; /* Position for absolute elements if needed */
+  overflow: hidden; /* Hide overflow */
+  border-radius: 8px; /* Rounded corners for the video wrapper */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Video shadow effect */
+  flex: 1; /* Allow the video wrapper to grow */
+  display: flex; /* Enable flex for centering */
+  justify-content: center; /* Center the video */
+  align-items: center; /* Center the video */
+  margin-bottom: 10px; /* Space below video wrapper for latency */
+}
+
+.video-player {
+  width: 100%; /* Responsive width */
+  height: 100%; /* Responsive height */
+  object-fit: cover; /* Cover the container */
+}
+
+.latency-info {
+  font-size: 1.2em; /* Increase font size for latency */
+  color: #007BFF; /* Use a primary color for emphasis */
+  margin-top: 10px; /* Space above latency info */
+  transition: color 0.3s; /* Smooth transition for color change */
+}
+
+.latency-info:hover {
+  color: #0056b3; /* Darker color on hover for feedback */
+}
+
+.no-video-message {
+  font-size: 1.2em; /* Increase font size for no video message */
+  color: #777; /* Light gray for no video message */
+}
+
+/* Responsive design adjustments */
+@media (max-width: 600px) {
+  .viewer-title {
+    font-size: 1.5em; /* Larger title for mobile */
   }
-  to {
-    transform: rotate(360deg);
+
+  .no-video-message {
+    font-size: 1em; /* Smaller font size for mobile */
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .latency-info {
+    font-size: 1em; /* Smaller latency info for mobile */
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }
