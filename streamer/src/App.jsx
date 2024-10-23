@@ -18,7 +18,9 @@ const Streamer = () => {
 
     const recorder = new RecordRTC(stream, {
       type: 'video',
-      mimeType: 'video/webm',
+      mimeType: 'video/x-matroska;codecs=avc1,mp4a',
+      // or mimeType: 'video/webm;codecs=vp9,opus' as a fallback
+      // If browsers do not support mp4 recording directly, you might have to convert server-side
     });
     recorderRef.current = recorder;
     recorder.startRecording();
@@ -29,13 +31,13 @@ const Streamer = () => {
     const recorder = recorderRef.current;
     recorder.stopRecording(() => {
       const blob = recorder.getBlob();
-      const file = new File([blob], 'video.webm', { type: 'video/webm' });
+      const file = new File([blob], 'video.mkv', { type: 'video/x-matroska' });
 
       // Upload video to the server
       const formData = new FormData();
       formData.append('video', file);
 
-      fetch('https://9387-47-247-143-178.ngrok-free.app/upload', {
+      fetch('https://6ded-47-247-143-178.ngrok-free.app/upload', {
         method: 'POST',
         body: formData,
       })

@@ -10,7 +10,7 @@ const Viewer = () => {
 
   const fetchLatestVideo = async () => {
     try {
-      const response = await fetch('https://9387-47-247-143-178.ngrok-free.app/latest-video', {
+      const response = await fetch('https://6ded-47-247-143-178.ngrok-free.app/latest-video', {
         method: "GET",
         headers: new Headers({
           "ngrok-skip-browser-warning": "69420",
@@ -20,7 +20,7 @@ const Viewer = () => {
       const data = await response.json();
 
       if (data.filename) {
-        const latestVideoUrl = `https://9387-47-247-143-178.ngrok-free.app/uploads/${data.filename}`;
+        const latestVideoUrl = `https://6ded-47-247-143-178.ngrok-free.app/uploads/${data.filename}`;
         
         // If a new video is fetched, reset the latency flag
         if (latestVideoUrl !== videoUrl) {

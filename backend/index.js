@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require('express'); 
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname)); // Ensure .webm extension
+    cb(null, uniqueSuffix + path.extname(file.originalname)); // Save with the original file extension
   },
 });
 
@@ -51,8 +51,9 @@ app.get('/latest-video', (req, res) => {
       return res.status(500).send('Error retrieving videos.');
     }
 
-    const webmFiles = files.filter(file => file.endsWith('.webm'));
-    const latestFile = webmFiles.sort((a, b) => {
+    // Update to filter for .mkv files instead of .webm
+    const mkvFiles = files.filter(file => file.endsWith('.mkv'));
+    const latestFile = mkvFiles.sort((a, b) => {
       return fs.statSync(path.join(uploadsDir, b)).mtime - fs.statSync(path.join(uploadsDir, a)).mtime;
     })[0];
 
@@ -63,7 +64,6 @@ app.get('/latest-video', (req, res) => {
     }
   });
 });
-
 
 // Serve static files from the uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
