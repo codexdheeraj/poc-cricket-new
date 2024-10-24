@@ -10,17 +10,11 @@ const Viewer = () => {
 
   const fetchLatestVideo = async () => {
     try {
-      const response = await fetch('https://6ded-47-247-143-178.ngrok-free.app/latest-video', {
-        method: "GET",
-        headers: new Headers({
-          "ngrok-skip-browser-warning": "69420",
-        }),
-      });
-
+      const response = await fetch('http://localhost:3001/latest-video');
       const data = await response.json();
 
       if (data.url) {
-        const latestVideoUrl = data.url;
+        const latestVideoUrl = `http://localhost:3001${data.url}`;
         
         // If a new video is fetched, reset the latency flag
         if (latestVideoUrl !== videoUrl) {
@@ -40,8 +34,7 @@ const Viewer = () => {
   const calculateLatency = () => {
     if (!latencyCalculated) { // Only calculate latency if it hasn't been done for the current video
       const viewerReceivedTime = Date.now();
-      console.log("viewerrecienved time:",viewerReceivedTime," and startstreamtime:",streamStartTime)
-      const streamStartTimestamp = new Date(streamStartTime).getTime(); 
+      const streamStartTimestamp = new Date(streamStartTime).getTime();
       const latencyTime = viewerReceivedTime - streamStartTimestamp;
       setLatency(latencyTime);
       setLatencyCalculated(true); // Mark latency as calculated for this video
@@ -49,8 +42,6 @@ const Viewer = () => {
   };
 
   const handleVideoEnd = async () => {
-    console.log("Video ended");
-    
     await fetchLatestVideo();
 
     if (videoUrl === '') {

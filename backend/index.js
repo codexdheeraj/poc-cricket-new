@@ -3,34 +3,21 @@ const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
-const mongoose = require('mongoose');
-const cloudinary = require('cloudinary').v2;
+const mongodb = require('mongodb');
 require('dotenv').config(); // Load environment variables
 
 const app = express();
 const port = 3001;
 
 app.use(cors());
-cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-  api_key: process.env.CLOUDINARY_API_KEY, 
-  api_secret: process.env.CLOUDINARY_API_SECRET // Click 'View API Keys' above to copy your API secret
-});
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
 
-// Define a Mongoose schema for storing video data
-const videoSchema = new mongoose.Schema({
-  url: { type: String, required: true },
-  streamStartTime: { type: Date, required: true },
-});
+const mongoClient = mongodb.MongoClient;
+const ObjectId = mongodb.ObjectId;
 
-const Video = mongoose.model('Video', videoSchema);
+let client;
+let db;
+let bucket;
+
 
 // Set up multer storage
 const storage = multer.diskStorage({
@@ -53,34 +40,33 @@ app.post('/upload', upload.single('video'), async (req, res) => {
   
   // Get current timestamp in milliseconds when the streamer starts recording
   streamStartTime = Date.now();
-
+  console.log("video file:",videoFile)
   if (videoFile) {
     try {
-      // Upload video to Cloudinary
-      const result = await cloudinary.uploader.upload(videoFile.path, {
-        resource_type: 'video',
-      });
+      // Upload file to GridFSBucket
+      const uploadStream = bucket.openUploadStream(req.file.originalname, {
+        chunkSizeBytes: 1048576,
+        metadata: {
+          name: req.file.originalname,
+          streamStartTime: new Date(streamStartTime),
+          size: req.file.size,
+          type: req.file.mimetype,
+        }
+      })
 
-      // Store video URL and stream start time in MongoDB
-      const newVideo = new Video({
-        url: result.secure_url, // Store the URL from Cloudinary
-        streamStartTime: new Date(streamStartTime), // Store timestamp
-      });
-
-      await newVideo.save();
-
-      // Remove the file after uploading to Cloudinary
-      fs.unlinkSync(videoFile.path);
-
-      res.json({
-        message: 'Video uploaded successfully!',
-        url: result.secure_url,
-        streamStartTime: streamStartTime,
-      });
+      fs.createReadStream(req.file.path).pipe(uploadStream).on('finish', ()=> {
+        console.log("upload finished")
+        res.json({
+          message: 'Video uploaded successfully!',
+          // url: result.secure_url,
+          streamStartTime: streamStartTime,
+        });
+      })
+      
     } catch (error) {
       console.error('Error uploading video to Cloudinary:', error);
       res.status(500).send('Error uploading video.');
-    }
+    }   
   } else {
     res.status(400).send('No video uploaded.');
   }
@@ -89,24 +75,70 @@ app.post('/upload', upload.single('video'), async (req, res) => {
 // API to get the latest video file and its recording timestamp
 app.get('/latest-video', async (req, res) => {
   try {
-    const latestVideo = await Video.findOne().sort({ streamStartTime: -1 }).exec();
+    // Find the latest uploaded video by checking the upload date
+    const latestFile = await db.collection('fs.files')
+      .find({})
+      .sort({ uploadDate: -1 })
+      .limit(1)
+      .toArray();
 
-    if (latestVideo) {
-      res.json({
-        url: latestVideo.url,
-        streamStartTime: latestVideo.streamStartTime,
-      });
-    } else {
-      res.status(404).json({ message: 'No videos found.' });
+    if (latestFile.length === 0) {
+      return res.status(404).json({ message: 'No video found' });
     }
+
+    const videoFile = latestFile[0];
+    const videoId = videoFile._id;
+    const streamStartTime = videoFile.metadata.streamStartTime;
+
+    // Return the streamable URL for the video file
+    res.json({
+      url: `/latest-video-stream/${videoId}`, // Stream endpoint
+      streamStartTime: streamStartTime,
+    });
   } catch (error) {
-    res.status(500).send('Error retrieving videos.');
+    console.error('Error fetching the latest video:', error);
+    res.status(500).json({ message: 'Error fetching video' });
   }
 });
+
+// Video stream endpoint
+app.get('/latest-video-stream/:id', (req, res) => {
+  const videoId = new ObjectId(req.params.id);
+
+  try {
+    const downloadStream = bucket.openDownloadStream(videoId);
+
+    res.set({
+      'Content-Type': 'video/mp4',
+      'Accept-Ranges': 'bytes',
+    });
+
+    downloadStream.pipe(res).on('error', (error) => {
+      console.error('Error streaming video:', error);
+      res.status(500).send('Error streaming video');
+    });
+  } catch (error) {
+    console.error('Error fetching video stream:', error);
+    res.status(500).send('Error fetching video stream');
+  }
+});
+
 
 // Serve static files from the uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.listen(port, () => {
+app.listen(port, async() => {
   console.log(`Server running on http://localhost:${port}`);
+  // Connect to MongoDB
+  try {
+    client = await mongoClient.connect(process.env.MONGO_URI, {
+      useUnifiedTopology: true,
+    });
+    db = client.db('videoDB');
+    console.log('MongoDB connected');
+
+    bucket = new mongodb.GridFSBucket(db);
+  } catch (error) {
+    console.log("Error: " + error)
+  }
 });
