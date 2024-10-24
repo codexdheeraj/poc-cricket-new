@@ -19,8 +19,8 @@ const Viewer = () => {
 
       const data = await response.json();
 
-      if (data.filename) {
-        const latestVideoUrl = `https://6ded-47-247-143-178.ngrok-free.app/uploads/${data.filename}`;
+      if (data.url) {
+        const latestVideoUrl = data.url;
         
         // If a new video is fetched, reset the latency flag
         if (latestVideoUrl !== videoUrl) {
@@ -40,7 +40,9 @@ const Viewer = () => {
   const calculateLatency = () => {
     if (!latencyCalculated) { // Only calculate latency if it hasn't been done for the current video
       const viewerReceivedTime = Date.now();
-      const latencyTime = viewerReceivedTime - streamStartTime;
+      console.log("viewerrecienved time:",viewerReceivedTime," and startstreamtime:",streamStartTime)
+      const streamStartTimestamp = new Date(streamStartTime).getTime(); 
+      const latencyTime = viewerReceivedTime - streamStartTimestamp;
       setLatency(latencyTime);
       setLatencyCalculated(true); // Mark latency as calculated for this video
     }
