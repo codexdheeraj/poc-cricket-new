@@ -37,7 +37,7 @@ const Streamer = () => {
       const formData = new FormData();
       formData.append('video', file);
 
-      fetch('https://6ded-47-247-143-178.ngrok-free.app/upload', {
+      fetch('https://f989-47-247-143-178.ngrok-free.app/upload', {
         method: 'POST',
         body: formData,
       })

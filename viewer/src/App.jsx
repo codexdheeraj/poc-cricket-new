@@ -10,7 +10,7 @@ const Viewer = () => {
 
   const fetchLatestVideo = async () => {
     try {
-      const response = await fetch('https://6ded-47-247-143-178.ngrok-free.app/latest-video', {
+      const response = await fetch('https://f989-47-247-143-178.ngrok-free.app/latest-video', {
         method: "GET",
         headers: new Headers({
           "ngrok-skip-browser-warning": "69420",
