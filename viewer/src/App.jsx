@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './App.css'; // Import the CSS file for styling
+import './App.css';
 
 const Viewer = () => {
   const [videoUrl, setVideoUrl] = useState('');
   const [streamStartTime, setStreamStartTime] = useState(null);
   const [latency, setLatency] = useState(null);
-  const [latencyCalculated, setLatencyCalculated] = useState(false); // New flag to track latency calculation
+  const [latencyCalculated, setLatencyCalculated] = useState(false);
+  const [recentVideos, setRecentVideos] = useState([]);
   const videoRef = useRef(null);
 
+  // Fetch the latest video
   const fetchLatestVideo = async () => {
     try {
       const response = await fetch('http://localhost:3001/latest-video');
@@ -16,7 +18,6 @@ const Viewer = () => {
       if (data.url) {
         const latestVideoUrl = `http://localhost:3001${data.url}`;
         
-        // If a new video is fetched, reset the latency flag
         if (latestVideoUrl !== videoUrl) {
           setLatencyCalculated(false); // Reset flag for new video
         }
@@ -31,13 +32,24 @@ const Viewer = () => {
     }
   };
 
+  // Fetch the recent videos list
+  const fetchRecentVideos = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/recent-videos');
+      const data = await response.json();
+      setRecentVideos(data);
+    } catch (error) {
+      console.error('Error fetching recent videos:', error);
+    }
+  };
+
   const calculateLatency = () => {
-    if (!latencyCalculated) { // Only calculate latency if it hasn't been done for the current video
+    if (!latencyCalculated) {
       const viewerReceivedTime = Date.now();
       const streamStartTimestamp = new Date(streamStartTime).getTime();
       const latencyTime = viewerReceivedTime - streamStartTimestamp;
       setLatency(latencyTime);
-      setLatencyCalculated(true); // Mark latency as calculated for this video
+      setLatencyCalculated(true);
     }
   };
 
@@ -53,7 +65,7 @@ const Viewer = () => {
       if (videoRef.current) {
         videoRef.current.play()
           .then(() => {
-            calculateLatency(); // Only calculate latency for new videos
+            calculateLatency();
           })
           .catch(err => {
             console.error('Error playing new video:', err);
@@ -62,8 +74,16 @@ const Viewer = () => {
     }
   };
 
+  const handleVideoSelect = (videoId, streamStartTime) => {
+    const selectedVideoUrl = `http://localhost:3001/latest-video-stream/${videoId}`;
+    setVideoUrl(selectedVideoUrl);
+    setStreamStartTime(streamStartTime);
+    setLatencyCalculated(false);
+  };
+
   useEffect(() => {
     fetchLatestVideo();
+    fetchRecentVideos();
   }, []);
 
   useEffect(() => {
@@ -71,7 +91,7 @@ const Viewer = () => {
       videoRef.current.muted = true;
       videoRef.current.play()
         .then(() => {
-          calculateLatency(); // Calculate latency when the first video starts playing
+          calculateLatency();
         })
         .catch(err => {
           console.error('Error playing video:', err);
@@ -102,6 +122,17 @@ const Viewer = () => {
       ) : (
         <p className="no-video-message">No video available.</p>
       )}
+
+      <h3 className="recent-videos-title">Recent Videos</h3>
+      <ul className="recent-videos-list">
+        {recentVideos.map(video => (
+          <li key={video.id} className="recent-video-item">
+            <button onClick={() => handleVideoSelect(video.id, video.streamStartTime)}>
+              {video.name}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

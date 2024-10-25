@@ -123,6 +123,29 @@ app.get('/latest-video-stream/:id', (req, res) => {
   }
 });
 
+// API to get the recent videos list
+// API to get metadata of the last 10 videos
+app.get('/recent-videos', async (req, res) => {
+  try {
+    const recentVideos = await db.collection('fs.files')
+      .find({})
+      .sort({ uploadDate: -1 })
+      .limit(10)
+      .toArray();
+
+    const videoList = recentVideos.map(video => ({
+      id: video._id,
+      name: video.filename,
+      streamStartTime: video.metadata.streamStartTime,
+    }));
+
+    res.json(videoList);
+  } catch (error) {
+    console.error('Error fetching recent videos:', error);
+    res.status(500).json({ message: 'Error fetching recent videos' });
+  }
+});
+
 
 // Serve static files from the uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
