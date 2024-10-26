@@ -125,7 +125,7 @@ app.get('/latest-video-stream/:id', (req, res) => {
 
 // API to get the recent videos list
 // API to get metadata of the last 10 videos
-app.get('/recent-videos', async (req, res) => {
+app.get('/all-videos', async (req, res) => {
   try {
     const recentVideos = await db.collection('fs.files')
       .find({})
