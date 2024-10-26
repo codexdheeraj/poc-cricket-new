@@ -34,6 +34,38 @@ const upload = multer({ storage });
 
 let streamStartTime = null; // Global variable to track stream start time
 
+let currentState = { status: "Stopped" };
+const clients = [];
+app.use(express.json())
+
+// API to handle SSE
+app.get('/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  clients.push(res);
+
+  // Remove client when connection closes
+  req.on('close', () => {
+    clients.splice(clients.indexOf(res), 1);
+  });
+});
+
+// Function to notify all connected clients
+const notifyClients = () => {
+  clients.forEach(client => client.write(`data: ${JSON.stringify(currentState)}\n\n`));
+};
+
+// Endpoint to update state
+app.post('/update', (req, res) => {
+  const { action } = req.body;
+  console.log("action", action)
+  currentState.status = action === "start" ? "Recording" : "Stopped"; // Update state based on action
+  notifyClients(); // Notify all clients of the new state
+  res.sendStatus(200);
+});
+
 // Streamer upload endpoint
 app.post('/upload', upload.single('video'), async (req, res) => {
   const videoFile = req.file;
@@ -127,13 +159,12 @@ app.get('/latest-video-stream/:id', (req, res) => {
 // API to get metadata of the last 10 videos
 app.get('/all-videos', async (req, res) => {
   try {
-    const recentVideos = await db.collection('fs.files')
+    const allVideos = await db.collection('fs.files')
       .find({})
       .sort({ uploadDate: -1 })
-      .limit(10)
       .toArray();
 
-    const videoList = recentVideos.map(video => ({
+    const videoList = allVideos.map(video => ({
       id: video._id,
       name: video.filename,
       streamStartTime: video.metadata.streamStartTime,
