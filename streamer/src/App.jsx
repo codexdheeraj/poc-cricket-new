@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css'; // Import the CSS file for styling
 import RecordRTC from 'recordrtc';
 
@@ -27,14 +27,15 @@ const Streamer = () => {
 
   const stopRecording = async () => {
     const recorder = recorderRef.current;
-    recorder.stopRecording(() => {
-      const blob = recorder.getBlob();
+    console.log("recorder",recorder)
+    recorder.stopRecording(async() => {
+      const blob = await recorder.getBlob();
       const file = new File([blob], 'video.mkv', { type: 'video/x-matroska' });
 
       // Upload video to the server
       const formData = new FormData();
       formData.append('video', file);
-      fetch('http://localhost:3001/upload', {
+      await fetch('http://localhost:3001/upload', {
       // fetch('https://6ded-47-247-143-178.ngrok-free.app/upload', {
         method: 'POST',
         body: formData,
@@ -47,13 +48,27 @@ const Streamer = () => {
           console.error('Upload failed:', err);
         });
     });
-    setIsRecording(false);
+    // setIsRecording(false); 
 
     // Stop video stream
     const tracks = videoRef.current.srcObject.getTracks();
     tracks.forEach((track) => track.stop());
     videoRef.current.srcObject = null;
   };
+  useEffect(() => {
+    const eventSource = new EventSource('http://localhost:3001/events');
+
+    eventSource.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+      console.log("data", data)
+      if(data.status === "Recording"){
+        await startRecording();
+      } else if(data.status === "Stopped"){
+        await stopRecording();
+      }
+    };
+  }, [])
+  
 
   return (
     <div className="streamer-container">
@@ -62,9 +77,9 @@ const Streamer = () => {
         <video ref={videoRef} autoPlay muted className="video-player"></video>
       </div>
       <br />
-      <button className={`record-button ${isRecording ? 'stop' : 'start'}`} onClick={isRecording ? stopRecording : startRecording}>
+      {/* <button className={`record-button ${isRecording ? 'stop' : 'start'}`} onClick={isRecording ? stopRecording : startRecording}>
         {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </button>
+      </button> */}
     </div>
   );
 };

@@ -1,0 +1,52 @@
+/* App.css */
+
+/* Set the video player area to 60% of the viewport height */
+.video-wrapper {
+    height: 60vh;
+    overflow: hidden;
+  }
+  
+  .video-player {
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Style for the recent videos list */
+  .recent-videos-list {
+    max-height: 30vh; /* Limits the height of the video list */
+    overflow-y: auto; /* Enables scrolling when content overflows */
+    margin-top: 10px;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid #ddd;
+  }
+  
+  .recent-video-item {
+    margin: 8px 0;
+  }
+  
+  .recent-video-item button {
+    width: 100%;
+    padding: 8px;
+    background-color: #f8f8f8;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+  }
+  
+  .recent-video-item button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .viewer-container {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .recent-videos-title {
+    margin-top: 20px;
+    font-size: 1.2em;
+    text-align: center;
+  }
+  

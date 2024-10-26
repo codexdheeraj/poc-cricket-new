@@ -65,6 +65,14 @@ const Home = () => {
       }
     }
   };
+  const handleAction = async (action) => {
+    console.log("action", action)
+    await fetch('http://localhost:3001/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+  };
 
   useEffect(() => {
     fetchLatestVideo();
@@ -106,6 +114,10 @@ const Home = () => {
       ) : (
         <p className="no-video-message">No video available.</p>
       )}
+      <div>
+        <button className="action-button" onClick={() => handleAction('start')}>Start Recording</button>
+        <button className="action-button" onClick={() => handleAction('stop')}>Stop Recording</button>
+      </div>
     </div>
   );
 };
