@@ -91,6 +91,23 @@ const Home = () => {
     }
   }, [videoUrl]);
 
+  useEffect(() => {
+    const eventSource = new EventSource('http://localhost:3001/video-events');
+
+    eventSource.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+      console.log("data", data)
+      if(data === "New Video Uploaded"){
+        await fetchLatestVideo()
+      }
+    };
+
+    return () => {
+      eventSource.close();
+      console.log("EventSource closed");
+    };
+  }, [])
+
   return (
     <div className="viewer-container">
       <h2 className="viewer-title">Viewer App</h2>

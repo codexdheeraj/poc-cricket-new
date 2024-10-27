@@ -36,6 +36,7 @@ let streamStartTime = null; // Global variable to track stream start time
 
 let currentState = { status: "Stopped" };
 const clients = [];
+const videoViewerClients = []
 app.use(express.json())
 
 // API to handle SSE
@@ -55,6 +56,25 @@ app.get('/events', (req, res) => {
 // Function to notify all connected clients
 const notifyClients = () => {
   clients.forEach(client => client.write(`data: ${JSON.stringify(currentState)}\n\n`));
+};
+
+app.get('/video-events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  videoViewerClients.push(res);
+
+  // Remove client when connection closes
+  req.on('close', () => {
+    videoViewerClients.splice(videoViewerClients.indexOf(res), 1);
+  }
+  );
+});
+
+// Function to notify all connected clients
+const notifyVideoViewerClients = () => {
+  videoViewerClients.forEach(client => client.write(`data: ${JSON.stringify('New Video Uploaded')}\n\n`));
 };
 
 // Endpoint to update state
@@ -93,6 +113,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
           // url: result.secure_url,
           streamStartTime: streamStartTime,
         });
+        notifyVideoViewerClients()
       })
       
     } catch (error) {

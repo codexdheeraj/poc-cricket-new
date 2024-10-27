@@ -66,6 +66,12 @@ const Streamer = () => {
       } else if(data.status === "Stopped"){
         await stopRecording();
       }
+      
+    };
+
+    return () => {
+      eventSource.close();
+      console.log("EventSource closed");
     };
   }, [])
   
