@@ -3,10 +3,18 @@ import { io } from 'socket.io-client';
 import './App.css'; // Import the CSS file for styling
 import RecordRTC from 'recordrtc';
 
+const backendUrl = 'http://localhost:3001'; // Backend URL
+
 const Streamer = () => {
   const videoRef = useRef(null);
   const recorderRef = useRef(null);
-  const socket = io('http://localhost:3001');
+
+  // Initialize the socket connection with ngrok skip header
+  const socket = io(backendUrl, {
+    extraHeaders: {
+      'ngrok-skip-browser-warning': 'true',
+    },
+  });
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -41,12 +49,15 @@ const Streamer = () => {
       const blob = await recorder.getBlob();
       const file = new File([blob], 'video.mkv', { type: 'video/x-matroska' });
   
-      // Upload video to the server
+      // Upload video to the server with ngrok skip header
       const formData = new FormData();
       formData.append('video', file);
-      await fetch('http://localhost:3001/upload', {
+      await fetch(backendUrl + '/upload', {
         method: 'POST',
         body: formData,
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
       })
         .then((res) => res.text())
         .then((result) => {

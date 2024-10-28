@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./AllVideos.css";
+
+const backendUrl = "http://localhost:3001"; // Backend URL
+
 const options = {
   year: "numeric",
   month: "long",
@@ -17,7 +20,11 @@ const AllVideos = () => {
 
   const fetchAllVideos = async () => {
     try {
-      const response = await fetch("http://localhost:3001/all-videos");
+      const response = await fetch(backendUrl + "/all-videos", {
+        headers: {
+          'ngrok-skip-browser-warning': 'true', // Add ngrok skip header here
+        },
+      });
       const data = await response.json();
       setRecentVideos(data);
     } catch (error) {
@@ -26,7 +33,7 @@ const AllVideos = () => {
   };
 
   const handleVideoSelect = (videoId, streamStartTime) => {
-    const selectedVideoUrl = `http://localhost:3001/latest-video-stream/${videoId}`;
+    const selectedVideoUrl = backendUrl + `/latest-video-stream/${videoId}`;
     setVideoUrl(selectedVideoUrl);
   };
 
@@ -36,6 +43,7 @@ const AllVideos = () => {
 
   useEffect(() => {
     if (videoUrl && videoRef.current) {
+      console.log("video url", videoUrl)
       videoRef.current.muted = true;
       videoRef.current
         .play()
@@ -47,6 +55,7 @@ const AllVideos = () => {
         });
     }
   }, [videoUrl]);
+
   return (
     <div>
       <div className="viewer-container">
@@ -68,16 +77,16 @@ const AllVideos = () => {
       </div>
       <div>
         <h3 className="recent-videos-title">All Videos</h3>
-      <ul className="recent-videos-list">
-        {recentVideos.map(video => (
-          <li key={video.id} className="recent-video-item">
-            <button onClick={() => handleVideoSelect(video.id, video.streamStartTime)}>
-              {video.id + "" + video.name + " " + new Intl.DateTimeFormat('en-US', options).format(new Date(video.streamStartTime))}
-              {console.log(video)}
-            </button>
-          </li>
-        ))}
-      </ul>
+        <ul className="recent-videos-list">
+          {recentVideos.map(video => (
+            <li key={video.id} className="recent-video-item">
+              <button onClick={() => handleVideoSelect(video.id, video.streamStartTime)}>
+                {video.id + " " + video.name + " " + new Intl.DateTimeFormat('en-US', options).format(new Date(video.streamStartTime))}
+                {console.log(video)}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

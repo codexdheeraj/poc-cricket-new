@@ -2,23 +2,35 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import '../App.css';
 
+const backendUrl = 'http://localhost:3001'; // Backend URL
+
 const Home = () => {
   const [videoUrl, setVideoUrl] = useState('');
   const [streamStartTime, setStreamStartTime] = useState(null);
   const [latency, setLatency] = useState(null);
   const [latencyCalculated, setLatencyCalculated] = useState(false);
-  const socket = io('http://localhost:3001');
+  
+  // Initialize the socket connection with ngrok skip header
+  const socket = io(backendUrl, {
+    extraHeaders: {
+      'ngrok-skip-browser-warning': 'true',
+    },
+  });
   
   const videoRef = useRef(null);
 
   // Fetch the latest video
   const fetchLatestVideo = async () => {
     try {
-      const response = await fetch('http://localhost:3001/latest-video');
+      const response = await fetch(backendUrl + '/latest-video', {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
       const data = await response.json();
 
       if (data.url) {
-        const latestVideoUrl = `http://localhost:3001${data.url}`;
+        const latestVideoUrl = backendUrl + `${data.url}`;
         
         if (latestVideoUrl !== videoUrl) {
           setLatencyCalculated(false); // Reset flag for new video
@@ -33,9 +45,6 @@ const Home = () => {
       console.error('Error fetching latest video:', error);
     }
   };
-
-  // Fetch the recent videos list
-
 
   const calculateLatency = () => {
     if (!latencyCalculated) {
@@ -67,11 +76,15 @@ const Home = () => {
       }
     }
   };
+
   const handleAction = async (action) => {
-    console.log("action", action)
-    await fetch('http://localhost:3001/update', {
+    console.log("action", action);
+    await fetch(backendUrl + '/update', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Add ngrok skip header here
+      },
       body: JSON.stringify({ action }),
     });
   };
@@ -103,7 +116,7 @@ const Home = () => {
     return () => {
       socket.off('newVideo');
     };
-  }, [])
+  }, []);
 
   return (
     <div className="viewer-container">
