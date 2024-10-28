@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
 import '../App.css';
 
 const Home = () => {
@@ -6,6 +7,7 @@ const Home = () => {
   const [streamStartTime, setStreamStartTime] = useState(null);
   const [latency, setLatency] = useState(null);
   const [latencyCalculated, setLatencyCalculated] = useState(false);
+  const socket = io('http://localhost:3001');
   
   const videoRef = useRef(null);
 
@@ -92,19 +94,14 @@ const Home = () => {
   }, [videoUrl]);
 
   useEffect(() => {
-    const eventSource = new EventSource('http://localhost:3001/video-events');
-
-    eventSource.onmessage = async (event) => {
-      const data = JSON.parse(event.data);
-      console.log("data", data)
-      if(data === "New Video Uploaded"){
-        await fetchLatestVideo()
+    socket.on('newVideo', (data) => {
+      if (data.available) {
+        fetchLatestVideo();
       }
-    };
+    });
 
     return () => {
-      eventSource.close();
-      console.log("EventSource closed");
+      socket.off('newVideo');
     };
   }, [])
 

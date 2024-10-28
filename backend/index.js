@@ -3,11 +3,24 @@ const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
+const http = require('http');
 const mongodb = require('mongodb');
+const socketIo = require('socket.io');
 require('dotenv').config(); // Load environment variables
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+  }
+});
 const port = 3001;
+
+
+io.on('connection', (socket) => {
+  console.log(socket.id)
+})
 
 app.use(cors());
 
@@ -35,54 +48,16 @@ const upload = multer({ storage });
 let streamStartTime = null; // Global variable to track stream start time
 
 let currentState = { status: "Stopped" };
-const clients = [];
-const videoViewerClients = []
 app.use(express.json())
 
-// API to handle SSE
-app.get('/events', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
 
-  clients.push(res);
-
-  // Remove client when connection closes
-  req.on('close', () => {
-    clients.splice(clients.indexOf(res), 1);
-  });
-});
-
-// Function to notify all connected clients
-const notifyClients = () => {
-  clients.forEach(client => client.write(`data: ${JSON.stringify(currentState)}\n\n`));
-};
-
-app.get('/video-events', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  videoViewerClients.push(res);
-
-  // Remove client when connection closes
-  req.on('close', () => {
-    videoViewerClients.splice(videoViewerClients.indexOf(res), 1);
-  }
-  );
-});
-
-// Function to notify all connected clients
-const notifyVideoViewerClients = () => {
-  videoViewerClients.forEach(client => client.write(`data: ${JSON.stringify('New Video Uploaded')}\n\n`));
-};
 
 // Endpoint to update state
 app.post('/update', (req, res) => {
   const { action } = req.body;
   console.log("action", action)
   currentState.status = action === "start" ? "Recording" : "Stopped"; // Update state based on action
-  notifyClients(); // Notify all clients of the new state
+  io.emit("recordingStatus", {status: currentState.status})
   res.sendStatus(200);
 });
 
@@ -113,7 +88,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
           // url: result.secure_url,
           streamStartTime: streamStartTime,
         });
-        notifyVideoViewerClients()
+        io.emit("newVideo", {available: true})
       })
       
     } catch (error) {
@@ -202,7 +177,7 @@ app.get('/all-videos', async (req, res) => {
 // Serve static files from the uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.listen(port, async() => {
+server.listen(port, async() => {
   console.log(`Server running on http://localhost:${port}`);
   // Connect to MongoDB
   try {
