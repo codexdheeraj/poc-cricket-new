@@ -33,7 +33,7 @@ const AllVideos = () => {
   };
 
   const handleVideoSelect = (videoId, streamStartTime) => {
-    const selectedVideoUrl = backendUrl + `/latest-video-stream/${videoId}`;
+    const selectedVideoUrl = backendUrl + `/video-stream/${videoId}`;
     setVideoUrl(selectedVideoUrl);
   };
 

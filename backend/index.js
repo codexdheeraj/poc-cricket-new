@@ -50,8 +50,6 @@ let streamStartTime = null; // Global variable to track stream start time
 let currentState = { status: "Stopped" };
 app.use(express.json())
 
-
-
 // Endpoint to update state
 app.post('/update', (req, res) => {
   const { action } = req.body;
@@ -67,10 +65,14 @@ app.post('/upload', upload.single('video'), async (req, res) => {
   
   // Get current timestamp in milliseconds when the streamer starts recording
   streamStartTime = Date.now();
-  console.log("video file:",videoFile)
   if (videoFile) {
     try {
       // Upload file to GridFSBucket
+      const uploadPath = path.join(__dirname, 'uploads', 'live.webm');
+      fs.promises.copyFile(req.file.path, uploadPath).then(() => {
+        console.log("File uploaded successfully")
+        io.emit("newVideoStatus", {status: "Available"})
+      });
       const uploadStream = bucket.openUploadStream(req.file.originalname, {
         chunkSizeBytes: 1048576,
         metadata: {
@@ -88,7 +90,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
           // url: result.secure_url,
           streamStartTime: streamStartTime,
         });
-        io.emit("newVideo", {available: true})
+        io.emit("newVideoStatus", {status: "Saved to DB"})
       })
       
     } catch (error) {
@@ -100,42 +102,12 @@ app.post('/upload', upload.single('video'), async (req, res) => {
   }
 });
 
-// API to get the latest video file and its recording timestamp
-app.get('/latest-video', async (req, res) => {
-  try {
-    // Find the latest uploaded video by checking the upload date
-    const latestFile = await db.collection('fs.files')
-      .find({})
-      .sort({ uploadDate: -1 })
-      .limit(1)
-      .toArray();
-
-    if (latestFile.length === 0) {
-      return res.status(404).json({ message: 'No video found' });
-    }
-
-    const videoFile = latestFile[0];
-    const videoId = videoFile._id;
-    const streamStartTime = videoFile.metadata.streamStartTime;
-
-    // Return the streamable URL for the video file
-    res.json({
-      url: `/latest-video-stream/${videoId}`, // Stream endpoint
-      streamStartTime: streamStartTime,
-    });
-  } catch (error) {
-    console.error('Error fetching the latest video:', error);
-    res.status(500).json({ message: 'Error fetching video' });
-  }
-});
-
 // Video stream endpoint
-app.get('/latest-video-stream/:id', (req, res) => {
+app.get('/video-stream/:id', (req, res) => {
   const videoId = new ObjectId(req.params.id);
 
   try {
     const downloadStream = bucket.openDownloadStream(videoId);
-
     res.set({
       'Content-Type': 'video/mp4',
       'Accept-Ranges': 'bytes',
@@ -151,7 +123,21 @@ app.get('/latest-video-stream/:id', (req, res) => {
   }
 });
 
-// API to get the recent videos list
+app.get("/latest-video", async(req, res) => {
+  try {
+    // return the streamable URL for the video file
+    res.json({
+      url: "/uploads/live.webm",
+      streamStartTime: streamStartTime,
+    });
+  } catch (error) {
+    console.error('Error fetching video stream:', error);
+    res.status(500).send('Error fetching video stream');
+  }
+});
+
+
+// API to get all videos list
 // API to get metadata of the last 10 videos
 app.get('/all-videos', async (req, res) => {
   try {

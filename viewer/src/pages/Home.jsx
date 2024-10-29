@@ -28,14 +28,13 @@ const Home = () => {
         },
       });
       const data = await response.json();
-
+  
       if (data.url) {
-        const latestVideoUrl = backendUrl + `${data.url}`;
-        
-        if (latestVideoUrl !== videoUrl) {
-          setLatencyCalculated(false); // Reset flag for new video
-        }
-
+        // Add a unique timestamp to avoid caching
+        const latestVideoUrl = `${backendUrl}/uploads/live.webm?timestamp=${Date.now()}`;
+        console.log('Latest video:', latestVideoUrl);
+        setLatencyCalculated(false); // Reset flag for new video
+  
         setVideoUrl(latestVideoUrl);
         setStreamStartTime(data.streamStartTime);
       } else {
@@ -45,6 +44,7 @@ const Home = () => {
       console.error('Error fetching latest video:', error);
     }
   };
+  
 
   const calculateLatency = () => {
     if (!latencyCalculated) {
@@ -107,14 +107,15 @@ const Home = () => {
   }, [videoUrl]);
 
   useEffect(() => {
-    socket.on('newVideo', (data) => {
-      if (data.available) {
+    socket.on('newVideoStatus', (data) => {
+      console.log('New video status:', data.status);
+      if (data.status === 'Available') {
         fetchLatestVideo();
       }
     });
 
     return () => {
-      socket.off('newVideo');
+      socket.off('newVideoStatus');
     };
   }, []);
 
@@ -129,7 +130,6 @@ const Home = () => {
               src={videoUrl}
               controls 
               className="video-player"
-              onEnded={handleVideoEnd}
             />
           </div>
           <div>
